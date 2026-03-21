@@ -9,6 +9,39 @@ MCP 툴을 이용해 Unity 게임을 직접 플레이테스트하고, 발견한 
 
 ---
 
+## MCP 연결 확인 (시작 전 필수)
+
+스킬 시작 시 항상 아래 순서로 연결을 확인한다.
+
+### 1. coplay MCP 연결 시도
+```
+list_unity_project_roots → 실행 중인 Unity 인스턴스 확인
+set_unity_project_root → 프로젝트 루트 설정
+get_unity_editor_state → 에디터 상태 확인
+```
+
+실패하면 → **2. mcp-for-unity 시도**
+
+### 2. mcp-for-unity 연결 시도
+```
+ReadMcpResourceTool(mcpforunity://instances) → 인스턴스 목록 확인
+set_active_instance → 인스턴스 연결
+manage_scene(get_active) → 씬 상태 확인
+```
+
+실패하면 → **3. 정적 분석 모드로 전환**
+
+### 3. 정적 분석 모드 (MCP 전체 실패 시)
+MCP 없이 파일 시스템 직접 접근으로 분석한다.
+```
+Glob("**/*.cs") → 스크립트 목록
+Read → 핵심 스크립트 읽기
+Grep → 수치/패턴 검색
+```
+결과 보고 시 `(정적 분석 — 런타임 미확인)` 명시.
+
+---
+
 ## 워크플로우
 
 총 4단계. 순서대로 실행하되, 각 단계에서 발견한 내용은 메모해두고 마지막에 한 번에 정리한다.
@@ -19,6 +52,7 @@ MCP 툴을 이용해 Unity 게임을 직접 플레이테스트하고, 발견한 
 
 게임을 실행하기 전에 코드를 읽어서 무엇을 테스트해야 할지 파악한다.
 
+**MCP 연결 시:**
 ```
 list_files → 프로젝트 구조 파악
 read_file → 핵심 스크립트 읽기 (PlayerController, GameManager, Enemy 등)
@@ -26,6 +60,14 @@ list_code_definition_names → 클래스/메서드 목록 빠르게 스캔
 search_files → 밸런스 수치 (damage, speed, hp, score 등) 검색
 list_game_objects_in_hierarchy → 씬 구조 파악
 get_game_object_info → 주요 오브젝트 컴포넌트 확인
+```
+
+**정적 분석 모드:**
+```
+Glob("Assets/**/*.cs") → 스크립트 목록
+Read → 핵심 스크립트 직접 읽기
+Grep(pattern, "*.cs") → 수치/패턴 검색
+Glob("Assets/**/*.unity") → 씬 파일 목록 확인
 ```
 
 **파악해야 할 것:**
@@ -38,9 +80,16 @@ get_game_object_info → 주요 오브젝트 컴포넌트 확인
 
 ### 2단계: 정적 검사 (실행 전)
 
+**MCP 연결 시:**
 ```
 check_compile_errors → 컴파일 에러 확인
 get_unity_logs → 에디터 로그에 기존 에러/경고 있는지 확인
+```
+
+**정적 분석 모드:**
+```
+Grep("Exception|NullReference|throw", "*.cs") → 잠재적 예외 패턴 검색
+Grep("TODO|FIXME|HACK", "*.cs") → 미완성 코드 확인
 ```
 
 컴파일 에러가 있으면 이후 단계를 진행하지 않고 즉시 이슈로 기록한다.
@@ -49,7 +98,7 @@ get_unity_logs → 에디터 로그에 기존 에러/경고 있는지 확인
 
 ### 3단계: 플레이테스트
 
-게임을 실행하고 시나리오별로 테스트한다.
+**MCP 연결 시** — 게임을 실행하고 시나리오별로 테스트한다:
 
 ```
 play_game → 게임 실행
@@ -80,6 +129,11 @@ capture_ui_canvas → UI 렌더링 확인
 ```
 stop_game → 테스트 완료 후 정지
 ```
+
+**정적 분석 모드** — 런타임 테스트 대신 코드 로직 분석으로 대체:
+- 조건문 경계값 직접 추적 (null 체크 누락, 잘못된 연산 등)
+- 코루틴/이벤트 흐름 수동 추적
+- 상속 구조 버그 (메서드 은닉, base 호출 누락 등) 확인
 
 ---
 
