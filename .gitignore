@@ -1,0 +1,16 @@
+.credentials.json
+memory/
+MEMORY.md
+history.jsonl
+sessions/
+cache/
+downloads/
+file-history/
+shell-snapshots/
+backups/
+plans/
+projects/
+tasks/
+plugins/
+settings.json
+CLAUDE.md
