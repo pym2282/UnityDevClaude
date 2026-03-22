@@ -154,25 +154,6 @@ Grep("transform\.position\s*=", "*.cs") → position 강제 설정 코드
   `MoveTowards / Vector3.Lerp` 등으로 이동하면 매 프레임 원점으로 복귀해 이동 무효화
 - 해결 패턴: 상태(isAttracted 등)에 따라 둘 중 하나만 실행하고, 이동 중엔 기준점(startPos) 갱신
 
-**⑤ WaitForSecondsRealtime — Unity 6 DontDestroyOnLoad 코루틴에서 영구 blocking**
-```
-Grep("WaitForSecondsRealtime", "*.cs") → 사용 위치 확인
-```
-- `WaitForSecondsRealtime`이 DontDestroyOnLoad 오브젝트의 코루틴에서 **절대 완료되지 않는** Unity 6 버그
-- 증상: 코루틴이 첫 yield 이후 멈춤 (무한 대기), OnDestroy 호출 없음, 다음 프레임 로그 미출력
-- 해결 패턴: `WaitForSecondsRealtime` → `yield return null` 루프로 대체
-  ```csharp
-  // ❌ DontDestroyOnLoad 코루틴에서 동작 안 함
-  yield return new WaitForSecondsRealtime(duration);
-
-  // ✅ 대체 패턴
-  float end = Time.realtimeSinceStartup + duration;
-  while (Time.realtimeSinceStartup < end)
-      yield return null;
-  ```
-- `WaitForSeconds`도 마찬가지 (timeScale=0 또는 같은 버그). 코루틴 대기에는 항상 위 패턴 사용
-- `IEnumerator Start()` 패턴도 동일하게 영향받음 → `void Start() + StartCoroutine()` 분리 권장
-
 ---
 
 ### 3단계: 플레이테스트
@@ -187,41 +168,16 @@ play_game → 게임 실행
 
 | 시나리오 | 테스트 방법 |
 |---------|-----------|
-| 게임 시작 정상 동작 | play 후 manage_scene(get_active)로 씬 전환 확인 |
-| 핵심 메카닉 동작 | Editor MenuItem 스크립트로 게임 함수 직접 호출 |
-| 경계값 테스트 | Editor MenuItem 스크립트로 극단 케이스 트리거 |
-| 게임오버 조건 | Editor MenuItem 스크립트로 승/패 조건 강제 트리거 |
+| 게임 시작 정상 동작 | play_game 후 capture_scene_object로 초기 씬 확인 |
+| 핵심 메카닉 동작 | execute_script로 플레이어 조작/스폰/이벤트 트리거 |
+| 경계값 테스트 | execute_script로 체력 0, 최대값, 음수 등 극단 케이스 |
+| 게임오버 조건 | execute_script로 승/패 조건 강제 트리거 |
 | 밸런스 체감 | 코드에서 읽은 수치를 실제 플레이 흐름과 대조 |
 
 ```
-manage_editor(play/stop) → 플레이 모드 제어
-manage_scene(get_active) → 씬 전환 확인 (씬 이름으로 상태 파악)
-read_console → 런타임 에러/경고 수집
-execute_menu_item → Editor MenuItem으로 게임 함수 호출
-```
-
-**⚠️ MCP 플레이테스트 주의사항:**
-
-- **find_gameobjects는 DontDestroyOnLoad 씬을 검색하지 않는다**
-  DontDestroyOnLoad 싱글턴(SceneLoader, GameManager 등)은 `find_gameobjects`에서 조회 안 됨
-  → 싱글턴 존재 확인은 `GameObject.Find("이름")` 또는 `manage_scene(get_hierarchy)` 후 전체 씬 조회로 대체
-
-- **게임 함수 직접 호출 방법**: `execute_script` 대신 Editor MenuItem 스크립트를 생성하고 `execute_menu_item`으로 호출하는 것이 가장 안정적
-  ```csharp
-  // Assets/Scripts/Editor/QARunner.cs 생성
-  [MenuItem("QA/Trigger Something")]
-  public static void TriggerSomething() {
-      var target = Object.FindFirstObjectByType<MyComponent>();
-      target?.MyMethod();
-  }
-  ```
-  → `execute_menu_item("QA/Trigger Something")` 으로 호출
-
-- **씬 전환 확인**: `manage_scene(get_active)`로 씬 이름을 체크하는 것이 가장 신뢰성 높음
-  특히 Boot → MainMenu → Level 흐름에서 각 단계마다 씬 이름을 확인해 전환이 정상 동작하는지 검증
-
-```
+execute_script → 특정 조건 강제 실행 (적 스폰, 체력 감소, 아이템 획득 등)
 capture_scene_object → 이상한 점 발견 시 스크린샷
+get_unity_logs → 런타임 에러/경고 수집
 capture_ui_canvas → UI 렌더링 확인
 ```
 
