@@ -421,6 +421,30 @@ else
 }
 ```
 
+#### ⑫ [SerializeField] 기본값 변경 시 기존 씬/프리팹 패치 필수
+
+`[SerializeField]` 필드의 코드 기본값을 바꿔도 **이미 존재하는 씬/프리팹에는 적용되지 않는다.**
+Unity는 Inspector에 저장된 직렬화 값을 코드 기본값보다 우선하기 때문이다.
+
+```csharp
+// PlayerLight.cs에서 기본값을 1f → 2f로 바꿔도
+[SerializeField] private float pulseDamage = 2f;  // ← 새 인스턴스에만 적용
+
+// 기존 씬의 PlayerLight 컴포넌트는 여전히 1f를 직렬화해서 가지고 있음
+// → 런타임에서 pulseDamage = 1f로 동작 (버그처럼 보임)
+```
+
+**체크리스트:**
+- `[SerializeField]` 값을 변경했다면 → 기존 씬/프리팹도 같이 수정
+- ProjectInitializer.cs에 해당 필드를 SetField()로 세팅하는 코드가 있다면 → 거기도 같이 수정
+- 씬이 많으면 일괄 패치용 임시 Editor MenuItem 스크립트 작성 → 실행 → 삭제
+
+**확인 방법:**
+```bash
+# ProjectInitializer에서 해당 필드 세팅 위치 확인
+grep -n "SetField.*fieldName" Assets/Scripts/Editor/ProjectInitializer.cs
+```
+
 #### ⑧ ProjectInitializer 재실행 안전 보장
 
 초기화 스크립트는 항상 두 번 이상 실행된다고 가정하고 작성한다.
