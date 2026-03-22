@@ -196,18 +196,6 @@ Grep("public.*\bHas\w\+\|public.*\bHeal\w\+\|public.*\bApply\w\+", "PlayerContro
 - **확인 방법**: 호출하는 메서드를 grep으로 대상 클래스에서 검색; 없으면 기존 메서드로 대체하거나 신규 추가
 - 심각도: 중 (컴파일 불가 → 런타임 진입 자체가 안 됨)
 
-**⑧ 씬 인프라 GO 누락 — EventSystem 없어 버튼 클릭 불가**
-```
-씬 hierarchy에 EventSystem 오브젝트가 있는지 확인
-Grep("EventSystem", "Assets/Scenes/{씬명}.unity") → 씬 파일에 직렬화 여부 확인
-```
-- UI 버튼이 있는 씬에 **EventSystem이 없으면 클릭이 전달되지 않음** (버튼 시각적으로는 보이지만 눌리지 않음)
-- 런타임 절차적 UI(`Start()`에서 Canvas/Button 동적 생성)를 쓰는 씬에서 특히 발생하기 쉬움 — Canvas는 코드로 만들면서 EventSystem은 빠뜨리는 패턴
-- **올바른 해결**: 씬 파일에 EventSystem GO를 직접 추가 (MCP `manage_gameobject(create)` 후 `save_scene`)
-- **잘못된 해결**: `Start()`에서 `FindAnyObjectByType<EventSystem>()==null` 동적 생성 — 씬 인프라는 코드가 아닌 씬에 있어야 함
-- 대상: EventSystem, Camera, AudioListener, Canvas 등 씬이 열리면 항상 있어야 하는 GO
-- 심각도: 상 (버튼 전체 무반응 → 씬 진행 불가)
-
 ---
 
 ### 3단계: 플레이테스트

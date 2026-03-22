@@ -1,5 +1,7 @@
 | 날짜 | 스킬 | 수정 내용 | 유형 |
 |------|------|-----------|------|
+| 2026-03-23 | unity-game-director | ⑭ 씬 직접 추가 vs 런타임 동적 생성 구분 규칙 추가 | 구조적 수정 |
+| 2026-03-23 | unity-qa-tester | ⑧ EventSystem 누락 버그 패턴 추가 (씬 인프라 GO는 씬에 직접 추가) | 구조적 수정 |
 | 2026-03-23 | unity-game-director | ⑬ 타 클래스 메서드 참조 확인(cross-reference check) 규칙 추가 — 스프린트 완료 전 자체 검증 섹션 | 구조적 수정 |
 | 2026-03-23 | unity-qa-tester | ⑦ 타 클래스 메서드 참조 불일치 패턴 추가 — CS1061 컴파일 에러 진단 체크리스트 | 구조적 수정 |
 | 2026-03-22 | unity-qa-tester | Application.runInBackground=true 필수 패턴 추가 (frameCount=1 멈춤 진단), SpriteRenderer.sprite==null 캐릭터 미표시 진단 패턴 추가 (⑤~⑥) | 구조적 수정 |
