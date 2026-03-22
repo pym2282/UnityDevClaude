@@ -182,20 +182,6 @@ Grep("WaitForSecondsRealtime", "*.cs") → 사용 위치 확인
 - `WaitForSeconds`도 마찬가지 (timeScale=0 또는 같은 버그). 코루틴 대기에는 항상 위 패턴 사용
 - `IEnumerator Start()` 패턴도 동일하게 영향받음 → `void Start() + StartCoroutine()` 분리 권장
 
-**⑦ 타 클래스 메서드 참조 불일치 — 컴파일 에러로 이어지는 이름 오류**
-```
-Grep("public.*\bHas\w\+\|public.*\bGet\w\+\|public.*\bHeal\w\+", "WeaponSystem.cs") → 실제 존재하는 메서드 목록 확인
-Grep("public.*\bHas\w\+\|public.*\bHeal\w\+\|public.*\bApply\w\+", "PlayerController.cs")
-```
-- 새 스크립트(Starter, Manager 등 오케스트레이터)가 다른 클래스의 메서드를 호출할 때
-  **해당 클래스에 그 메서드가 실제로 존재하지 않는** 경우 컴파일 에러 발생
-- 특히 헬퍼성 메서드 이름은 유사어가 많아 오류가 잦음:
-  - `HasWeapon()` → 실제로는 `GetWeapon(id) != null` 패턴
-  - `HealPercent()` → 실제로는 `Heal(int amount)` 만 존재
-- **진단**: 컴파일 에러 `CS1061: does not contain a definition for '메서드명'` 형태
-- **확인 방법**: 호출하는 메서드를 grep으로 대상 클래스에서 검색; 없으면 기존 메서드로 대체하거나 신규 추가
-- 심각도: 중 (컴파일 불가 → 런타임 진입 자체가 안 됨)
-
 ---
 
 ### 3단계: 플레이테스트
