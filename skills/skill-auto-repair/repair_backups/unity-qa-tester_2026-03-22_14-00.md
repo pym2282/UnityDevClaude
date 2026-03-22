@@ -154,16 +154,7 @@ Grep("transform\.position\s*=", "*.cs") → position 강제 설정 코드
   `MoveTowards / Vector3.Lerp` 등으로 이동하면 매 프레임 원점으로 복귀해 이동 무효화
 - 해결 패턴: 상태(isAttracted 등)에 따라 둘 중 하나만 실행하고, 이동 중엔 기준점(startPos) 갱신
 
-**⑤ 캐릭터/오브젝트가 보이지 않음 — SpriteRenderer.sprite == null**
-```
-ReadMcpResourceTool(gameobject/{id}/component/SpriteRenderer) → sprite 필드 확인
-```
-- 플레이어나 적이 씬에 존재(find_gameobjects에서 발견)하는데 화면에 안 보이면 `sprite == null` 확인
-- 원인: 런타임 생성 `Texture2D`(`new Texture2D()` + `Sprite.Create()`)로 만든 스프라이트는 도메인 리로드/씬 재로드 후 소실됨
-- 진단: `isVisible: false` + `sprite: null` → 스프라이트 미설정
-- 해결: 프리팹에 디스크 저장된 PNG 스프라이트를 할당해야 함. 스프라이트 저장 도구가 있으면 실행해서 재임포트
-
-**⑥ WaitForSecondsRealtime — Unity 6 DontDestroyOnLoad 코루틴에서 영구 blocking**
+**⑤ WaitForSecondsRealtime — Unity 6 DontDestroyOnLoad 코루틴에서 영구 blocking**
 ```
 Grep("WaitForSecondsRealtime", "*.cs") → 사용 위치 확인
 ```
@@ -210,11 +201,6 @@ execute_menu_item → Editor MenuItem으로 게임 함수 호출
 ```
 
 **⚠️ MCP 플레이테스트 주의사항:**
-
-- **Application.runInBackground = true 필수** — MCP 원격 제어 시 에디터가 포커스를 잃으면 Unity가 프레임 업데이트를 중단한다.
-  증상: `realtimeSinceStartup`은 계속 증가하는데 `frameCount=1`에서 멈춤. 게임 로직이 전혀 진행되지 않음.
-  진단: `Check Time` MenuItem으로 두 번 연속 호출 → frameCount가 변하지 않으면 이 문제.
-  해결: BootLoader.Start() 첫 줄에 `Application.runInBackground = true;` 추가.
 
 - **find_gameobjects는 DontDestroyOnLoad 씬을 검색하지 않는다**
   DontDestroyOnLoad 싱글턴(SceneLoader, GameManager 등)은 `find_gameobjects`에서 조회 안 됨
