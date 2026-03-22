@@ -335,6 +335,92 @@ Tilemap + TilemapCollider2D + CompositeCollider2D 셋업이 완료되어도, 실
 - `CompositeCollider2D.pathCount > 0` 인지 확인 (0이면 충돌 없음)
 - 레벨 씬 생성 시 반드시 `tilemap.SetTile()` 으로 기본 바닥 페인팅 포함
 
+#### ⑧ MonoBehaviour 상속 — lifecycle 메서드 반드시 override
+
+Unity MonoBehaviour를 상속할 때 `Start()`, `Awake()`, `Update()` 등을 재정의할 때는
+**반드시 `override` 키워드**를 붙여야 한다. 없으면 C# method hiding이 발생해 부모의
+lifecycle 메서드가 **완전히 무시된다** — 컴파일 에러 없이 런타임에 조용히 실패.
+
+```csharp
+// ❌ hiding — EnemyBase.Start()가 절대 호출되지 않음 (컴파일은 통과)
+public class BossBase : EnemyBase
+{
+    void Start() { /* base.Start() 없음 → player == null */ }
+}
+
+// ✅ 올바른 override + base 호출
+public class BossBase : EnemyBase
+{
+    protected override void Start()
+    {
+        base.Start();  // ← 부모 Start() 반드시 호출
+        // 추가 로직
+    }
+}
+```
+
+**자체 검증:**
+```bash
+grep -rn "void Start\(\)\|void Awake\(\)\|void Update\(\)\|void OnEnable\(\)" Assets/Scripts/
+```
+`override` 없는 결과가 있으면 상속 계층 확인.
+
+#### ⑨ DontDestroyOnLoad 싱글턴 — BootLoader 등록 체크리스트
+
+새 DontDestroyOnLoad 싱글턴을 만들 때마다 **BootLoader(또는 초기화 시스템)에 즉시 등록**한다.
+등록하지 않으면 Boot 씬을 거치지 않고 레벨 씬을 직접 열 때 `Instance == null`.
+
+```csharp
+// BootLoader.cs — 새 싱글턴 추가 시 이 목록에 반드시 추가
+EnsureInstance<GameManager>(...);
+EnsureInstance<SaveSystem>(...);
+EnsureInstance<UpgradeManager>(...);  // ← 빠뜨리기 쉬운 패턴
+```
+
+**체크 방법:** `DontDestroyOnLoad`를 grep해 목록 추출 → BootLoader의 EnsureInstance 목록과 1:1 대조.
+
+#### ⑩ 저장(Save) / 로드(Load) 대칭성 규칙
+
+`Save()`에서 직렬화하는 모든 값은 `LoadFromSave()`에서 **반드시 복원**해야 한다.
+`bool` 플래그는 잘 복원하면서 파생 숫자값(count, amount)을 놓치는 패턴이 빈번하다.
+
+```csharp
+// ❌ 비대칭 — bool은 복원하고 ExtraHearts는 누락
+UpgradedLightPulse = save.upgradeLightPulse;  // 복원됨
+// ExtraHearts 복원 없음 → 재시작 후 0으로 초기화, 중복 구매 가능
+
+// ✅ 대칭 복원
+UpgradedLightPulse = save.upgradeLightPulse;
+ExtraHearts = Mathf.Max(0, save.maxHealth - 3);  // 파생값 직접 계산
+```
+
+**저장/로드 대칭 체크리스트:**
+- bool 플래그 저장 → bool 플래그 복원 ✓
+- count/amount 저장 → count/amount 복원 ✓ (bool에서 역산 가능하면 역산)
+- 최대값 저장 → 최대값 복원 + 현재값도 Clamp ✓
+
+#### ⑪ Update()에서 position 직접 설정 + 이동 로직 공존 금지
+
+같은 Update()에서 `transform.position = 고정값` (idle bob 등) 이후 `MoveTowards/Lerp`로
+이동하면 매 프레임 원점으로 복귀해 **이동이 무효화**된다.
+
+```csharp
+// ❌ bob이 MoveTowards를 매 프레임 덮어씀
+transform.position = startPos + bob;      // ← 원점 강제
+transform.position = Vector3.MoveTowards(transform.position, target, speed);  // 무효
+
+// ✅ 상태에 따라 둘 중 하나만 실행
+if (isAttracted)
+{
+    transform.position = Vector3.MoveTowards(transform.position, target, speed);
+    startPos = transform.position;  // ← 기준점 갱신 필수
+}
+else
+{
+    transform.position = startPos + bob;
+}
+```
+
 #### ⑧ ProjectInitializer 재실행 안전 보장
 
 초기화 스크립트는 항상 두 번 이상 실행된다고 가정하고 작성한다.

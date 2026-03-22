@@ -82,6 +82,52 @@ PrefabUtility.SaveAsPrefabAsset(go, path);
 
 ---
 
+## 6. BossBase.Start() 메서드 hiding (C# 주의)
+
+**증상:** 보스가 플레이어를 감지하지 못하고 아무 행동도 하지 않음.
+EnemyBase.Start()의 `player` 참조가 null 상태로 유지됨.
+
+**원인:** BossBase가 `protected override void Start()` 대신 `void Start()`로 정의
+→ C#에서 메서드 hiding 발생 → EnemyBase.Start() 미실행.
+`base.Start()` 없이 새 Start() 정의 시 Unity의 MonoBehaviour 계층에서 기반 Start()가 호출 안 됨.
+
+**해결:** `void Start()` → `protected override void Start()` + `base.Start()` 추가.
+
+---
+
+## 7. BootLoader에서 DontDestroyOnLoad 싱글턴 등록 누락 패턴
+
+**증상:** 특정 씬에서 업그레이드, 설정 등 매니저 기능이 NullReferenceException.
+
+**원인:** BootLoader가 새 싱글턴을 추가할 때 EnsureInstance 목록에 넣지 않으면
+Boot 씬 이외에서 직접 씬을 열 때 Instance == null.
+
+**해결:** 새 DontDestroyOnLoad 싱글턴 추가 시 항상 BootLoader.EnsureInstance 목록에 추가.
+
+---
+
+## 8. UpgradeManager ExtraHearts 세이브 복원 패턴
+
+**증상:** 재시작 후 하트 업그레이드를 이미 구매했는데도 재구매 가능, 오브 낭비.
+
+**원인:** LoadFromSave()에서 boolean 플래그만 복원하고 count형 값(ExtraHearts)을
+별도로 계산하지 않음.
+
+**해결:** `ExtraHearts = Mathf.Max(0, save.maxHealth - 3);`
+
+---
+
+## 9. LightOrb bob 애니메이션 + 흡착 이동 충돌 패턴
+
+**증상:** 오브가 플레이어 방향으로 부드럽게 흡착되지 않고 원위치 주변에서 진동.
+
+**원인:** Update()마다 bob이 transform.position을 startPos+sin(...)으로 강제 설정한 후
+MoveTowards가 실행됨. startPos가 갱신 안 돼 매 프레임 원점으로 복귀.
+
+**해결:** 흡착 중에는 bob 스킵, `startPos = transform.position` 갱신.
+
+---
+
 ## 6. Lumina 프로젝트 특이 설정
 
 - `Physics2D.gravity.y = -28` (기본값 -9.81과 다름)

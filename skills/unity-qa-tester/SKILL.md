@@ -29,6 +29,11 @@ set_active_instance → 인스턴스 연결
 manage_scene(get_active) → 씬 상태 확인
 ```
 
+**"Session not found" 에러가 나는 경우:**
+이는 Claude Code 프로세스가 mcp-for-unity 서버보다 먼저 시작되어 구 세션 ID를 갖고 있기 때문이다.
+Claude Code를 완전히 종료 후 재시작하면 해결된다. 서버가 먼저 실행 중인지 확인 후 재시작할 것.
+해결이 불가능한 상황이면 → **3. 정적 분석 모드로 전환**
+
 실패하면 → **3. 정적 분석 모드로 전환**
 
 ### 3. 정적 분석 모드 (MCP 전체 실패 시)
@@ -93,6 +98,47 @@ Grep("TODO|FIXME|HACK", "*.cs") → 미완성 코드 확인
 ```
 
 컴파일 에러가 있으면 이후 단계를 진행하지 않고 즉시 이슈로 기록한다.
+
+---
+
+#### ⚠️ 반복 발생 버그 패턴 체크리스트
+
+코드 분석 시 아래 패턴을 **반드시** 능동적으로 검색한다. 지나치기 쉬운 구조적 실수들이다.
+
+**① MonoBehaviour lifecycle 메서드 hiding (상속 계층)**
+```
+Grep("void Start\(\)|void Awake\(\)|void Update\(\)", "*.cs")
+```
+- 부모 클래스에 `protected virtual void Start()` 가 있는데
+  자식 클래스에 `override` 없이 `void Start()` 로 재정의하면 **부모 Start() 미실행**
+- 특히 `EnemyBase → BossBase` 같은 다단계 상속에서 빈번하게 발생
+- `base.Start()` 누락도 함께 확인
+
+**② DontDestroyOnLoad 싱글턴 — BootLoader/초기화 시스템 등록 누락**
+```
+Grep("DontDestroyOnLoad", "*.cs") → 싱글턴 목록 추출
+Grep("EnsureInstance\|Instantiate.*Prefab", "BootLoader.cs 또는 초기화 스크립트") → 등록 여부 대조
+```
+- DontDestroyOnLoad 싱글턴이 BootLoader에 등록 안 되면
+  Boot 씬을 거치지 않고 레벨 씬 직접 로드 시 `Instance == null` → NullReferenceException
+- 런타임 MCP로 확인: `find_gameobjects(by_component, "UpgradeManager")` 등 직접 검색
+
+**③ 저장(Save) / 로드(Load) 값 비대칭**
+```
+Grep("Save\(\)|SaveCheckpoint\|CurrentSave\.", "*.cs") → 저장하는 값 목록
+Grep("LoadFromSave\|CurrentSave\.", "*.cs") → 복원하는 값 목록
+```
+- 저장하는 모든 필드가 로드 시 복원되는지 1:1 대조
+- 카운트/누적 값(ExtraHearts, collectedCount 등)은 특히 누락되기 쉬움
+  `bool` 플래그는 잘 복원하면서 파생 숫자값은 놓치는 패턴 주의
+
+**④ Update()에서 position 직접 설정 + 별도 이동 로직 공존**
+```
+Grep("transform\.position\s*=", "*.cs") → position 강제 설정 코드
+```
+- 같은 Update()에서 `transform.position = ...` (bob, idle 애니메이션 등)을 한 후
+  `MoveTowards / Vector3.Lerp` 등으로 이동하면 매 프레임 원점으로 복귀해 이동 무효화
+- 해결 패턴: 상태(isAttracted 등)에 따라 둘 중 하나만 실행하고, 이동 중엔 기준점(startPos) 갱신
 
 ---
 
