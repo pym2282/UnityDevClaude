@@ -206,7 +206,18 @@ Grep("EventSystem", "Assets/Scenes/{씬명}.unity") → 씬 파일에 직렬화 
 - **올바른 해결**: 씬 파일에 EventSystem GO를 직접 추가 (MCP `manage_gameobject(create)` 후 `save_scene`)
 - **잘못된 해결**: `Start()`에서 `FindAnyObjectByType<EventSystem>()==null` 동적 생성 — 씬 인프라는 코드가 아닌 씬에 있어야 함
 - 대상: EventSystem, Camera, AudioListener, Canvas 등 씬이 열리면 항상 있어야 하는 GO
+- **절차적 UI 씬 필수 GO 체크리스트**: EventSystem + InputModule, AudioListener, (카메라 필요 시) Camera
 - 심각도: 상 (버튼 전체 무반응 → 씬 진행 불가)
+
+**⑨ `[SerializeField] TMP_FontAsset font` 미연결 — 한글 텍스트 미표시**
+```
+ReadMcpResourceTool(gameobject/{id}/component/{스크립트명}) → font 필드 값 확인
+```
+- 절차적 UI 스크립트(`CodexUI`, `CharacterSelectUI`, `MetaUpgradeUI` 등)에 `[SerializeField] TMP_FontAsset font` 필드가 있는데 씬에서 미연결이면 기본 LiberationSans(한글 미지원) 적용
+- 증상: 한글은 □□□ 또는 빈칸으로 표시, 영어/숫자는 정상 표시
+- 진단: MCP `component/{스크립트명}` 조회 → `"font": null` 이면 미연결
+- 수정: MCP `manage_components(set_property, font, "Assets/Art/Fonts/MalgunGothic_TMP.asset")`
+- 심각도: 중 (한글 UI 전체 미표시 → 텍스트 읽기 불가)
 
 ---
 
@@ -229,6 +240,7 @@ play_game → 게임 실행
 | Button 위에 투명 패널이 없는가 | hierarchy sibling 순서 / sortingOrder 확인 |
 | `[SerializeField] Button` 필드에 GO가 연결됐는가 | 컴포넌트 properties 확인 |
 | `onClick.AddListener`가 코드에서 호출되는가 | 스크립트 Start() 확인 |
+| `[SerializeField] TMP_FontAsset font` 필드가 연결됐는가 | `font: null`이면 한글 미표시 → 한글 지원 폰트 에셋 연결 필요 |
 
 특히 `Start()`에서 Canvas를 동적 생성하는 씬(절차적 UI)은 EventSystem 누락이 빈번 — 씬 파일에 GO로 직접 추가해야 한다.
 
