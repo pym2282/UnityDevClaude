@@ -218,11 +218,26 @@ Grep("EventSystem", "Assets/Scenes/{씬명}.unity") → 씬 파일에 직렬화 
 play_game → 게임 실행
 ```
 
+**⚠️ UI가 있는 씬은 플레이 전에 반드시 버튼 클릭 가능 여부를 먼저 체크한다**
+
+버튼이 시각적으로 보여도 아래 조건 중 하나라도 빠지면 클릭이 안 된다:
+
+| 조건 | 확인 방법 |
+|------|-----------|
+| EventSystem이 씬에 있는가 | `manage_scene(get_hierarchy)`에서 EventSystem GO 확인 |
+| Canvas에 GraphicRaycaster가 있는가 | Canvas 컴포넌트 목록 확인 |
+| Button 위에 투명 패널이 없는가 | hierarchy sibling 순서 / sortingOrder 확인 |
+| `[SerializeField] Button` 필드에 GO가 연결됐는가 | 컴포넌트 properties 확인 |
+| `onClick.AddListener`가 코드에서 호출되는가 | 스크립트 Start() 확인 |
+
+특히 `Start()`에서 Canvas를 동적 생성하는 씬(절차적 UI)은 EventSystem 누락이 빈번 — 씬 파일에 GO로 직접 추가해야 한다.
+
 **기본 테스트 시나리오** (1단계에서 파악한 내용 기반으로 조정):
 
 | 시나리오 | 테스트 방법 |
 |---------|-----------|
 | 게임 시작 정상 동작 | play 후 manage_scene(get_active)로 씬 전환 확인 |
+| **UI 버튼 클릭 동작** | **각 씬 진입 후 주요 버튼이 실제로 눌리는지 확인** |
 | 핵심 메카닉 동작 | Editor MenuItem 스크립트로 게임 함수 직접 호출 |
 | 경계값 테스트 | Editor MenuItem 스크립트로 극단 케이스 트리거 |
 | 게임오버 조건 | Editor MenuItem 스크립트로 승/패 조건 강제 트리거 |

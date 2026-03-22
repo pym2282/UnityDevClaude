@@ -1,5 +1,7 @@
 | 날짜 | 스킬 | 수정 내용 | 유형 |
 |------|------|-----------|------|
+| 2026-03-23 | unity-game-director | ⑮ UI 버튼 클릭 가능 여부 체크리스트 추가 (EventSystem, GraphicRaycaster, 오버레이, SerializeField 연결, AddListener) | 구조적 수정 |
+| 2026-03-23 | unity-qa-tester | UI 버튼 클릭 동작 확인 체크리스트를 3단계 플레이테스트 시나리오에 추가 | 구조적 수정 |
 | 2026-03-23 | unity-game-director | ⑭ 씬 직접 추가 vs 런타임 동적 생성 구분 규칙 추가 | 구조적 수정 |
 | 2026-03-23 | unity-qa-tester | ⑧ EventSystem 누락 버그 패턴 추가 (씬 인프라 GO는 씬에 직접 추가) | 구조적 수정 |
 | 2026-03-23 | unity-game-director | ⑬ 타 클래스 메서드 참조 확인(cross-reference check) 규칙 추가 — 스프린트 완료 전 자체 검증 섹션 | 구조적 수정 |
