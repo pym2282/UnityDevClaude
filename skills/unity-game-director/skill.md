@@ -486,6 +486,34 @@ For each task:
 3. Other layers give brief feedback — flag issues, suggest improvements
 4. Director synthesizes and decides
 5. Implementing layer applies the decision
+6. **스프린트 완료 후 → QA 루프 자동 실행** (아래 참고)
+
+### QA 루프 (스프린트 완료 후 자동)
+
+스프린트 구현이 끝나면 사람에게 넘기기 전에 반드시 QA 루프를 돌린다.
+사람이 "QA 해줘"라고 말하지 않아도 Director가 자동으로 실행한다.
+
+```
+[QA 루프]
+① unity-qa-tester 실행 → 이슈 리포트 수신
+② 이슈 없음 → CHECKPOINT로 이동
+③ 이슈 있음 →
+   - 🔴 코드 버그: Director가 직접 수정
+   - 🟡 밸런스: Director가 기획 의도 기준으로 판단 후 수정
+   - 🔵 UX/씬: Director가 수정
+   - 🟠 아트: 사람에게 보고 후 다음 진행 (아트는 직접 수정 불가)
+④ 수정 완료 → ① 반복
+⑤ 🟠만 남거나 이슈 없음 → CHECKPOINT
+```
+
+**루프 탈출 조건:**
+- 코드/밸런스/UX 이슈가 0건
+- 또는 3회 반복 후에도 같은 이슈가 반복되면 → 사람에게 에스컬레이션
+
+**QA 루프 중 Director 판단 기준:**
+- 버그 수정은 코드 레이어 규칙(①~⑫)에 따라 처리
+- 밸런스 수정은 게임의 핵심 판타지/설계 의도를 기준으로 판단 (수치만 보지 않음)
+- 같은 버그가 반복되면 근본 원인을 찾아 구조적으로 수정 (임시 패치 금지)
 
 ### Human checkpoints
 
