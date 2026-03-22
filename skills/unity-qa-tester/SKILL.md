@@ -219,6 +219,18 @@ ReadMcpResourceTool(gameobject/{id}/component/{스크립트명}) → font 필드
 - 수정: MCP `manage_components(set_property, font, "Assets/Art/Fonts/MalgunGothic_TMP.asset")`
 - 심각도: 중 (한글 UI 전체 미표시 → 텍스트 읽기 불가)
 
+**⑩ `FindAnyObjectByType<Canvas>()` — DDOL Canvas 잡혀서 버튼 무반응**
+```
+Grep("FindAnyObjectByType<Canvas>", "*.cs") → Canvas를 Find로 찾는 코드 검색
+```
+- `FindAnyObjectByType<Canvas>()`는 DDOL Canvas(예: ScreenTransition의 ScreenFade_Canvas)를 반환할 수 있다
+- DDOL Canvas에는 `GraphicRaycaster`가 없기 때문에 그 하위에 생성된 버튼은 클릭이 전달되지 않는다
+- **증상**: 첫 진입 시엔 우연히 동작하다가 씬을 나갔다 재진입하면 버튼 전체 무반응
+- **진단**: `FindAnyObjectByType<Canvas>()` grep → DDOL Canvas 존재 확인(ScreenTransition 등)
+- **올바른 해결**: Canvas를 Find로 찾지 말고 `[SerializeField] private Canvas targetCanvas`로 씬에서 직접 연결
+- **참고**: `FindAnyObjectByType` 자체는 문제 없음. Canvas만 특별히 위험 (DDOL 오염 가능성)
+- 심각도: 상 (씬 재진입 후 버튼 전체 무반응 → 진행 불가)
+
 ---
 
 ### 3단계: 플레이테스트
