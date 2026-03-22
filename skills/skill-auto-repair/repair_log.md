@@ -1,5 +1,6 @@
 | 날짜 | 스킬 | 수정 내용 | 유형 |
 |------|------|-----------|------|
+| 2026-03-23 | unity-game-director | ⑯ UI 씬 직접 배치 원칙 강화 — Canvas 계층은 씬에, 동적 항목만 프리팹. 절차적 UI 생성 금지 명시 | 구조적 수정 |
 | 2026-03-23 | unity-game-director | ⑮ 절차적 UI 씬 필수 GO 목록 추가 (EventSystem, AudioListener, font 연결) | 구조적 수정 |
 | 2026-03-23 | unity-qa-tester | ⑨ TMP_FontAsset font 미연결 → 한글 미표시 패턴 추가, UI 버튼 체크리스트에 font 항목 추가 | 구조적 수정 |
 | 2026-03-23 | unity-game-director | ⑮ UI 버튼 클릭 가능 여부 체크리스트 추가 (EventSystem, GraphicRaycaster, 오버레이, SerializeField 연결, AddListener) | 구조적 수정 |
